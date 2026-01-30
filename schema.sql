@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS borrowers (
   guarantorPhone TEXT,
   guarantorAddress TEXT,
   guarantorRelation TEXT,
+  defaultInterestRate REAL DEFAULT 0,
   status TEXT DEFAULT 'ACTIVE',
   riskScore INTEGER,
   notes TEXT,

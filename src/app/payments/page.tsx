@@ -1,5 +1,7 @@
 
-import { db } from '@/lib/db'
+export const dynamic = 'force-dynamic'
+
+import { dbAll, dbGet } from '@/lib/db'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Sidebar } from '@/components/dashboard/sidebar'
@@ -10,30 +12,27 @@ import { Badge } from '@/components/ui/badge'
 import { ExportPaymentsButton } from '@/components/payments/export-button'
 import { PaymentList } from '@/components/payments/payment-list'
 
-function getPayments() {
+async function getPayments() {
     const userId = 'test-user-id'
-    const payments = db.prepare(`
-    SELECT p.*, l.loanNumber, b.name as borrowerName 
+    const payments = await dbAll(`
+    SELECT p.*, l.loanNumber, b.name as borrowerName
     FROM payments p
     JOIN loans l ON p.loanId = l.id
     JOIN borrowers b ON l.borrowerId = b.id
     WHERE p.userId = ?
     ORDER BY p.paymentDate DESC
     LIMIT 50
-  `).all(userId) as any[]
+  `, userId) as any[]
 
-    const stats = db.prepare(`
-    SELECT 
-      SUM(amount) as totalReceived
-    FROM payments 
-    WHERE userId = ?
-  `).get(userId) as { totalReceived: number }
+    const stats = await dbGet<{ totalReceived: number }>(`
+    SELECT SUM(amount) as totalReceived FROM payments WHERE userId = ?
+  `, userId)
 
-    return { payments, stats }
+    return { payments, stats: stats || { totalReceived: 0 } }
 }
 
-export default function PaymentsPage() {
-    const { payments, stats } = getPayments()
+export default async function PaymentsPage() {
+    const { payments, stats } = await getPayments()
 
     return (
         <div className="bg-[#EBF1F5] min-h-screen flex font-sans text-slate-900">
@@ -56,7 +55,6 @@ export default function PaymentsPage() {
                     </div>
                 </header>
 
-                {/* Stats Strip */}
                 <div className="grid grid-cols-3 gap-6 mb-8">
                     <Card className="rounded-[24px] border-none shadow-sm bg-black text-white p-6">
                         <div className="flex justify-between items-start mb-4">
@@ -68,7 +66,6 @@ export default function PaymentsPage() {
                         <h3 className="text-3xl font-extrabold mb-1">₹{stats.totalReceived?.toLocaleString() || 0}</h3>
                         <p className="text-sm text-gray-400">Total Collections</p>
                     </Card>
-                    {/* Placeholders for future stats */}
                     <Card className="rounded-[24px] border-none shadow-sm bg-white p-6 opacity-50">
                         <p className="font-bold">This Month</p>
                         <p className="text-2xl mt-2">--</p>
@@ -79,7 +76,6 @@ export default function PaymentsPage() {
                     </Card>
                 </div>
 
-                {/* Transactions List */}
                 <Card className="rounded-[30px] border-none shadow-sm bg-white overflow-hidden">
                     <div className="p-6 border-b border-gray-100">
                         <h3 className="font-bold text-lg">Recent Transactions</h3>

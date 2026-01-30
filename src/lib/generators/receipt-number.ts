@@ -1,20 +1,17 @@
 
-import { db } from '@/lib/db'
+import { dbGet } from '@/lib/db'
 
 export async function generateReceiptNumber(): Promise<string> {
     const currentYear = new Date().getFullYear()
     const prefix = `RCP-${currentYear}`
 
-    // Find last receipt number
-    const stmt = db.prepare<string, { receiptNumber: string }>(`
-    SELECT receiptNumber 
-    FROM payments 
-    WHERE receiptNumber LIKE ? 
-    ORDER BY receiptNumber DESC 
+    const lastReceipt = await dbGet<{ receiptNumber: string }>(`
+    SELECT receiptNumber
+    FROM payments
+    WHERE receiptNumber LIKE ?
+    ORDER BY receiptNumber DESC
     LIMIT 1
-  `)
-
-    const lastReceipt = stmt.get(`${prefix}%`)
+  `, `${prefix}%`)
 
     let nextSeq = 1
     if (lastReceipt) {

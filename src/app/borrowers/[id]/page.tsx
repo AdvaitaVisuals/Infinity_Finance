@@ -1,5 +1,7 @@
 
-import { db } from '@/lib/db'
+export const dynamic = 'force-dynamic'
+
+import { dbGet, dbAll } from '@/lib/db'
 import { Sidebar } from '@/components/dashboard/sidebar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -25,29 +27,26 @@ interface BorrowerDetails {
 export default async function BorrowerDetailsPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
 
-    // Fetch Data Server Side
-    const borrower = db.prepare('SELECT * FROM borrowers WHERE id = ?').get(id) as BorrowerDetails
+    const borrower = await dbGet<BorrowerDetails>('SELECT * FROM borrowers WHERE id = ?', id)
 
     if (!borrower) {
         return <div>Borrower not found</div>
     }
 
-    const loans = db.prepare(`
-    SELECT * FROM loans WHERE borrowerId = ? ORDER BY createdAt DESC
-  `).all(id) as any[]
+    const loans = await dbAll('SELECT * FROM loans WHERE borrowerId = ? ORDER BY createdAt DESC', id) as any[]
 
-    const payments = db.prepare(`
-    SELECT p.*, l.loanNumber 
+    const payments = await dbAll(`
+    SELECT p.*, l.loanNumber
     FROM payments p
     JOIN loans l ON p.loanId = l.id
-    WHERE l.borrowerId = ? 
+    WHERE l.borrowerId = ?
     ORDER BY p.paymentDate DESC
-  `).all(id) as any[]
+  `, id) as any[]
 
     const stats = {
-        totalLent: loans.reduce((acc, curr) => acc + curr.principalAmount, 0),
-        totalDebt: loans.reduce((acc, curr) => acc + (curr.principalPending + curr.interestPending), 0),
-        activeLoans: loans.filter(l => l.status === 'ACTIVE').length
+        totalLent: loans.reduce((acc: number, curr: any) => acc + curr.principalAmount, 0),
+        totalDebt: loans.reduce((acc: number, curr: any) => acc + (curr.principalPending + curr.interestPending), 0),
+        activeLoans: loans.filter((l: any) => l.status === 'ACTIVE').length
     }
 
     return (
@@ -81,7 +80,6 @@ export default async function BorrowerDetailsPage({ params }: { params: Promise<
                 </header>
 
                 <div className="grid grid-cols-12 gap-8">
-                    {/* Sidebar Stats */}
                     <div className="col-span-4 space-y-6">
                         <Card className="rounded-[24px] border-none shadow-sm bg-white overflow-hidden">
                             <CardContent className="p-6 space-y-4">
@@ -105,7 +103,6 @@ export default async function BorrowerDetailsPage({ params }: { params: Promise<
                             </CardContent>
                         </Card>
 
-                        {/* Address Card */}
                         <Card className="rounded-[24px] border-none shadow-sm bg-white overflow-hidden">
                             <CardContent className="p-6 flex items-start gap-4">
                                 <MapPin className="w-5 h-5 text-gray-400 mt-1" />
@@ -117,7 +114,6 @@ export default async function BorrowerDetailsPage({ params }: { params: Promise<
                         </Card>
                     </div>
 
-                    {/* Main Content Tabs */}
                     <div className="col-span-8">
                         <BorrowerClientParams borrower={borrower} loans={loans} payments={payments} />
                     </div>

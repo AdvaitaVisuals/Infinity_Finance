@@ -1,18 +1,17 @@
 
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { dbAll } from '@/lib/db'
 
 export async function GET(req: NextRequest) {
     const userId = req.headers.get('x-user-id') || 'test-user-id'
 
     try {
-        const loans = db.prepare(`
-      SELECT l.*, b.name as borrowerName 
-      FROM loans l
-      JOIN borrowers b ON l.borrowerId = b.id
+        const loans = await dbAll(`
+      SELECT l.*, b.name as borrowerName
+      FROM loans l JOIN borrowers b ON l.borrowerId = b.id
       WHERE l.userId = ?
       ORDER BY l.createdAt DESC
-    `).all(userId)
+    `, userId)
 
         return NextResponse.json({ success: true, data: loans })
     } catch (error: any) {
