@@ -67,7 +67,7 @@ function getDashboardStats() {
 
   const borrowerCount = db.prepare(`
     SELECT COUNT(*) as count FROM borrowers WHERE userId = ?
-  `).get(userId) as BorrowerCount
+  `).get(userId) as { count: number }
 
   const recentLoans = db.prepare(`
     SELECT l.*, b.name as borrowerName, b.photoUrl
