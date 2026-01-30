@@ -12,6 +12,8 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 
+export const dynamic = 'force-dynamic'
+
 export default function LoansPage() {
     return (
         <div className="bg-[#EBF1F5] min-h-screen flex font-sans text-slate-900">
