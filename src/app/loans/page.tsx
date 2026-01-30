@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
@@ -22,7 +22,9 @@ export default function LoansPage() {
             </div>
 
             <main className="flex-1 p-8 overflow-y-auto h-screen">
-                <LoansContent />
+                <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading loans...</div>}>
+                    <LoansContent />
+                </Suspense>
             </main>
         </div>
     )
